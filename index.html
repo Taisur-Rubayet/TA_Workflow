@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TA Manager</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f6f9;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .board {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .column {
+      background: #e3e6ea;
+      padding: 15px;
+      width: 30%;
+      border-radius: 12px;
+      min-height: 300px;
+      transition: 0.2s;
+    }
+
+    .column:hover {
+      background: #d5d9de;
+    }
+
+    .column h3 {
+      text-align: center;
+    }
+
+    .card {
+      background: white;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      cursor: grab;
+      line-height: 1.5;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<h1>📋 TA Manager</h1>
+
+<button onclick="location.reload()">🔄 Refresh</button>
+
+<h2>🎓 Student Problems</h2>
+
+<div class="board">
+  <div class="column" id="Pending"><h3>Pending</h3></div>
+  <div class="column" id="In Progress"><h3>In Progress</h3></div>
+  <div class="column" id="Done"><h3>Done</h3></div>
+</div>
+
+<script>
+
+let WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzRVr0qkwH3a3ysfNLDcZ0ebQyEGkjSZO09d5P3ePmZB1Im8la17Zw6WBWSpM2aSqLL/exec";
+
+// update sheet
+function sendUpdate(row, status){
+  let url = WEB_APP_URL + "?row=" + row + "&status=" + encodeURIComponent(status);
+
+  fetch(url)
+    .then(res => res.text())
+    .then(res => console.log("Server:", res))
+    .catch(err => console.error("Error:", err));
+}
+
+// load data
+fetch("https://opensheet.elk.sh/1S0gh-DXWwflrNm-ciDtpZ64MGgQ4vghSibS48teAkAg/Form_Responses_1")
+.then(res => res.json())
+.then(data => {
+
+  // clear columns
+  ["Pending","In Progress","Done"].forEach(col => {
+    document.getElementById(col).innerHTML = "<h3>" + col + "</h3>";
+  });
+
+  data.forEach((item, index) => {
+
+    let keys = Object.keys(item);
+
+    let id = item[keys.find(k => k.toLowerCase().includes("id"))] || "No ID";
+    let name = item[keys.find(k => k.toLowerCase().includes("name"))] || "No Name";
+    let type = item[keys.find(k => k.toLowerCase().includes("type"))] || "No Type";
+    let details = item[keys.find(k => k.toLowerCase().includes("details"))] || "No Details";
+
+    let statusRaw = item[keys.find(k => k.toLowerCase().includes("status"))] || "Pending";
+
+    // clean status
+    let status = statusRaw.toString().trim().toLowerCase();
+
+    if(status === "pending") status = "Pending";
+    else if(status === "in progress") status = "In Progress";
+    else if(status === "done") status = "Done";
+    else status = "Pending";
+
+    let card = document.createElement("div");
+    card.className = "card";
+
+    // row tracking
+    card.setAttribute("data-row", index + 2);
+
+    // 🔥 ID INCLUDED HERE
+    card.innerHTML =
+      "<b>🆔 " + id + "</b><br>" +
+      "👤 " + name + "<br>" +
+      "📌 " + type + "<br>" +
+      "📝 " + details;
+
+    document.getElementById(status)?.appendChild(card);
+
+  });
+
+  // drag system
+  ["Pending","In Progress","Done"].forEach(col => {
+
+    new Sortable(document.getElementById(col), {
+      group: "kanban",
+      animation: 150,
+
+      onEnd: function (evt) {
+        let row = evt.item.getAttribute("data-row");
+        let newStatus = evt.to.id;
+
+        sendUpdate(row, newStatus);
+      }
+
+    });
+
+  });
+
+});
+
+</script>
+
+</body>
+</html>
