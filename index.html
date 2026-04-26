@@ -14,7 +14,13 @@
 
     h1 {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 10px;
+    }
+
+    .summary {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 20px;
     }
 
     .board {
@@ -29,11 +35,6 @@
       width: 30%;
       border-radius: 12px;
       min-height: 300px;
-      transition: 0.2s;
-    }
-
-    .column:hover {
-      background: #d5d9de;
     }
 
     .column h3 {
@@ -60,10 +61,6 @@
       margin-bottom: 10px;
     }
 
-    button:hover {
-      background: #0056b3;
-    }
-
   </style>
 </head>
 
@@ -72,6 +69,10 @@
 <h1>📋 TA Manager</h1>
 
 <button onclick="location.reload()">🔄 Refresh</button>
+
+<div class="summary" id="summary">
+  Pending: 0 | In Progress: 0 | Done: 0
+</div>
 
 <h2>🎓 Student Problems</h2>
 
@@ -85,7 +86,6 @@
 
 let WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzRVr0qkwH3a3ysfNLDcZ0ebQyEGkjSZO09d5P3ePmZB1Im8la17Zw6WBWSpM2aSqLL/exec";
 
-// update sheet
 function sendUpdate(row, status){
   let url = WEB_APP_URL + "?row=" + row + "&status=" + encodeURIComponent(status);
 
@@ -95,12 +95,16 @@ function sendUpdate(row, status){
     .catch(err => console.error("Error:", err));
 }
 
-// load data
 fetch("https://opensheet.elk.sh/1S0gh-DXWwflrNm-ciDtpZ64MGgQ4vghSibS48teAkAg/Form_Responses_1")
 .then(res => res.json())
 .then(data => {
 
-  // clear columns
+  let count = {
+    "Pending": 0,
+    "In Progress": 0,
+    "Done": 0
+  };
+
   ["Pending","In Progress","Done"].forEach(col => {
     document.getElementById(col).innerHTML = "<h3>" + col + "</h3>";
   });
@@ -111,12 +115,12 @@ fetch("https://opensheet.elk.sh/1S0gh-DXWwflrNm-ciDtpZ64MGgQ4vghSibS48teAkAg/For
 
     let id = item[keys.find(k => k.toLowerCase().includes("id"))] || "No ID";
     let name = item[keys.find(k => k.toLowerCase().includes("name"))] || "No Name";
+    let section = item[keys.find(k => k.toLowerCase().includes("section"))] || "N/A";
     let type = item[keys.find(k => k.toLowerCase().includes("type"))] || "No Type";
     let details = item[keys.find(k => k.toLowerCase().includes("details"))] || "No Details";
 
     let statusRaw = item[keys.find(k => k.toLowerCase().includes("status"))] || "Pending";
 
-    // clean status
     let status = statusRaw.toString().trim().toLowerCase();
 
     if(status === "pending") status = "Pending";
@@ -124,16 +128,19 @@ fetch("https://opensheet.elk.sh/1S0gh-DXWwflrNm-ciDtpZ64MGgQ4vghSibS48teAkAg/For
     else if(status === "done") status = "Done";
     else status = "Pending";
 
+    // 🔥 count update
+    count[status]++;
+
     let card = document.createElement("div");
     card.className = "card";
 
-    // row tracking
     card.setAttribute("data-row", index + 2);
 
-    // 🔥 ID INCLUDED HERE
+    // 🔥 SECTION + ID added
     card.innerHTML =
       "<b>🆔 " + id + "</b><br>" +
       "👤 " + name + "<br>" +
+      "🏫 Section: " + section + "<br>" +
       "📌 " + type + "<br>" +
       "📝 " + details;
 
@@ -141,7 +148,12 @@ fetch("https://opensheet.elk.sh/1S0gh-DXWwflrNm-ciDtpZ64MGgQ4vghSibS48teAkAg/For
 
   });
 
-  // drag system
+  // 🔥 update summary
+  document.getElementById("summary").innerText =
+    "Pending: " + count["Pending"] +
+    " | In Progress: " + count["In Progress"] +
+    " | Done: " + count["Done"];
+
   ["Pending","In Progress","Done"].forEach(col => {
 
     new Sortable(document.getElementById(col), {
