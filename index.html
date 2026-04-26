@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TA Manager</title>
+  <title>TA Workflow</title>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
@@ -63,13 +63,12 @@
     button:hover {
       background: #0056b3;
     }
-
   </style>
 </head>
 
 <body>
 
-<h1>📋 TA Manager</h1>
+<h1>📋 TA Workflow</h1>
 
 <button onclick="location.reload()">🔄 Refresh</button>
 
@@ -85,7 +84,7 @@
 
 let WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzRVr0qkwH3a3ysfNLDcZ0ebQyEGkjSZO09d5P3ePmZB1Im8la17Zw6WBWSpM2aSqLL/exec";
 
-// update sheet
+// 🔥 Update Sheet
 function sendUpdate(row, status){
   let url = WEB_APP_URL + "?row=" + row + "&status=" + encodeURIComponent(status);
 
@@ -95,7 +94,7 @@ function sendUpdate(row, status){
     .catch(err => console.error("Error:", err));
 }
 
-// load data
+// 🔥 Load Data
 fetch("https://opensheet.elk.sh/1S0gh-DXWwflrNm-ciDtpZ64MGgQ4vghSibS48teAkAg/Form_Responses_1")
 .then(res => res.json())
 .then(data => {
@@ -111,6 +110,7 @@ fetch("https://opensheet.elk.sh/1S0gh-DXWwflrNm-ciDtpZ64MGgQ4vghSibS48teAkAg/For
 
     let id = item[keys.find(k => k.toLowerCase().includes("id"))] || "No ID";
     let name = item[keys.find(k => k.toLowerCase().includes("name"))] || "No Name";
+    let section = item[keys.find(k => k.toLowerCase().includes("section"))] || "N/A";
     let type = item[keys.find(k => k.toLowerCase().includes("type"))] || "No Type";
     let details = item[keys.find(k => k.toLowerCase().includes("details"))] || "No Details";
 
@@ -130,10 +130,11 @@ fetch("https://opensheet.elk.sh/1S0gh-DXWwflrNm-ciDtpZ64MGgQ4vghSibS48teAkAg/For
     // row tracking
     card.setAttribute("data-row", index + 2);
 
-    // 🔥 ID INCLUDED HERE
+    // 🔥 ID + SECTION INCLUDED
     card.innerHTML =
       "<b>🆔 " + id + "</b><br>" +
       "👤 " + name + "<br>" +
+      "🏫 Section: " + section + "<br>" +
       "📌 " + type + "<br>" +
       "📝 " + details;
 
